@@ -1,0 +1,33 @@
+# Replace with your values
+$accessToken = "your-access-token-here"  # Copy from the previous script's "Access Token acquired" output
+$appId = "your-app-id-here"              # e.g., "535fb089-9ff3-47b6-9bfb-4f1264799865"
+
+# Graph API endpoint for Intune managed devices
+$graphUrl = "https://graph.microsoft.com/v1.0/deviceManagement/managedDevices"
+
+# Headers with the access token
+$headers = @{
+    Authorization = "Bearer $accessToken"
+    "Content-Type" = "application/json"
+}
+
+# Get the list of managed devices
+try {
+    $devices = Invoke-RestMethod -Uri $graphUrl -Method Get -Headers $headers
+    if ($devices.value) {
+        Write-Output "List of Intune-Enrolled Devices:"
+        $devices.value | ForEach-Object {
+            Write-Output "Device Name: $($_.deviceName)"
+            Write-Output "OS: $($_.operatingSystem)"
+            Write-Output "Compliance State: $($_.complianceState)"
+            Write-Output "Last Check-In: $($_.lastSyncDateTime)"
+            Write-Output "User: $($_.userDisplayName)"
+            Write-Output "-------------------"
+        }
+    } else {
+        Write-Output "No Intune-enrolled devices found."
+    }
+}
+catch {
+    Write-Error "Failed to list devices: $_"
+}
