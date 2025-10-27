@@ -1,0 +1,57 @@
+# Replace with actual values from your Intune enrollment script or Azure Portal
+$tenantId = "your-tenant-id-here"          # e.g., "123e4567-e89b-12d3-a456-426614174000"
+$appId = "your-app-id-here"                # e.g., "535fb089-9ff3-47b6-9bfb-4f1264799865"
+$secretPlainText = "your-client-secret-here" # e.g., "qWgdYA....L1qKv5bPX" - temporary plaintext for conversion
+$secret = ConvertTo-SecureString -String $secretPlainText -AsPlainText -Force
+
+# Token endpoint URL
+$tokenUrl = "https://login.microsoftonline.com/$tenantId/oauth2/v2.0/token"
+
+# Convert SecureString to string for the request (secure handling in memory)
+$secretForRequest = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secret))
+
+# Request body for client credentials flow
+$body = @{
+    client_id     = $appId
+    scope         = "https://graph.microsoft.com/.default"
+    client_secret = $secretForRequest
+    grant_type    = "client_credentials"
+}
+
+# Get the access token
+try {
+    $response = Invoke-RestMethod -Uri $tokenUrl -Method Post -Body $body -ContentType "application/x-www-form-urlencoded"
+    $accessToken = $response.access_token
+    Write-Output "Access Token acquired: $accessToken"
+}
+catch {
+    Write-Error "Failed to get token: $_"
+    exit
+}
+
+# Graph API endpoint to get app permissions (OAuth2PermissionGrants)
+$graphUrl = "https://graph.microsoft.com/v1.0/servicePrincipals?`$filter=appId eq '$appId'"
+
+# Headers with the token
+$headers = @{
+    Authorization = "Bearer $accessToken"
+    "Content-Type" = "application/json"
+}
+
+# Enumerate privileges (permissions granted to the app)
+try {
+    $servicePrincipal = Invoke-RestMethod -Uri $graphUrl -Method Get -Headers $headers
+    $appPermissions = $servicePrincipal.value[0].oauth2PermissionGrants
+
+    if ($appPermissions) {
+        Write-Output "Enumerated Privileges (OAuth2 Permissions):"
+        foreach ($permission in $appPermissions) {
+            Write-Output "Permission: $($permission.scope), Consent Type: $($permission.consentType)"
+        }
+    } else {
+        Write-Output "No specific delegated permissions found. Check application permissions in Azure Portal."
+    }
+}
+catch {
+    Write-Error "Failed to enumerate privileges: $_"
+}
