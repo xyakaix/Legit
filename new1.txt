@@ -1,0 +1,25 @@
+# Stolen credentials from the Intune enrollment script
+$tenantId = "123e4567-e89b-12d3-a456-426614174000"  # Replace with actual Tenant ID
+$clientId = "535fb089-9ff3-47b6-9bfb-4f1264799865"  # Replace with actual App ID
+$clientSecret = "qWgdYA....L1qKv5bPX"  # Replace with actual Client Secret
+
+# Token endpoint URL
+$tokenUrl = "https://login.microsoftonline.com/$tenantId/oauth2/v2.0/token"
+
+# Request body for client credentials flow
+$body = @{
+    client_id     = $clientId
+    scope         = "https://graph.microsoft.com/.default"
+    client_secret = $clientSecret
+    grant_type    = "client_credentials"
+}
+
+# Send POST request to get access token
+try {
+    $response = Invoke-RestMethod -Uri $tokenUrl -Method Post -Body $body -ContentType "application/x-www-form-urlencoded"
+    $accessToken = $response.access_token
+    Write-Output "Access Token: $accessToken"
+}
+catch {
+    Write-Error "Failed to get token: $_"
+}
