@@ -1,0 +1,16 @@
+$appRolesUrl = "https://graph.microsoft.com/v1.0/servicePrincipals/$spId/appRoleAssignments"
+try {
+    $appRoleAssignments = Invoke-RestMethod -Uri $appRolesUrl -Method Get -Headers $headers
+    if ($appRoleAssignments.value) {
+        Write-Output "Application Permissions:"
+        foreach ($assignment in $appRoleAssignments.value) {
+            $role = $assignment.appRoleId
+            Write-Output "App Role ID: $role (Check Azure Portal for role name)"
+        }
+    } else {
+        Write-Output "No application permissions found."
+    }
+}
+catch {
+    Write-Error "Failed to get application permissions: $_"
+}
