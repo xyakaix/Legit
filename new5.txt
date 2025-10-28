@@ -1,0 +1,68 @@
+
+也海 <xyakaix@gmail.com>
+3:24 PM (2 minutes ago)
+to me
+
+# ================================
+# Get All Azure AD Devices via Graph
+# Requires: App token with Device.Read.All or Device.ReadWrite.All
+# ================================
+
+# === 1. INPUT: Paste your token here ===
+$ACCESS_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIs..."   # PASTE YOUR TOKEN HERE
+
+# === 2. CONFIG ===
+$Top = 100               # Max per page (1-999)
+$Select = "displayName,deviceId,operatingSystem,trustType,registeredOwners"
+$OutputCsv = "AzureDevices.csv"
+
+# === 3. Headers ===
+$headers = @{
+    "Authorization" = "Bearer $ACCESS_TOKEN"
+    "Content-Type"  = "application/json"
+}
+
+# === 4. Collect all devices (with pagination) ===
+$allDevices = @()
+$uri = "https://graph.microsoft.com/v1.0/devices?`$top=$Top&`$select=$Select"
+
+do {
+    try {
+        $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+        $allDevices += $response.value
+
+        # Progress
+        Write-Host "Fetched $($allDevices.Count) devices..." -ForegroundColor Cyan
+
+        # Next page?
+        $uri = $response.'@odata.nextLink'
+    }
+    catch {
+        Write-Error "API Error: $($_.Exception.Message)"
+        if ($_.Exception.Response) {
+            $stream = $_.Exception.Response.GetResponseStream()
+            $reader = New-Object System.IO.StreamReader($stream)
+            Write-Error $reader.ReadToEnd()
+        }
+        break
+    }
+} while ($uri)
+
+# === 5. Format & Export ===
+$export = $allDevices | ForEach-Object {
+    $owners = ($_.registeredOwners | Select-Object -ExpandProperty displayName) -join "; "
+    [PSCustomObject]@{
+        DeviceName      = $_.displayName
+        DeviceId        = $_.deviceId
+        OS              = $_.operatingSystem
+        TrustType       = $_.trustType
+        Owners          = $owners
+    }
+}
+
+# === 6. Show in console (first 10) ===
+$export | Select-Object -First 10 | Format-Table -AutoSize
+
+# === 7. Export to CSV ===
+$export | Export-Csv -Path $OutputCsv -NoTypeInformation -Encoding UTF8
+Write-Host "`nExported $($export.Count) devices to $OutputCsv" -ForegroundColor Green
