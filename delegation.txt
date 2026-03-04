@@ -1,0 +1,33 @@
+# Unconstrained Delegation
+Write-Host "`n[*] Unconstrained Delegation:" -ForegroundColor Yellow
+$searcher = New-Object DirectoryServices.DirectorySearcher
+$searcher.Filter = "(userAccountControl:1.2.840.113556.1.4.803:=524288)"
+$searcher.PropertiesToLoad.Add("samaccountname") | Out-Null
+$searcher.FindAll() | ForEach-Object {
+    Write-Host "  [+] $($_.Properties['samaccountname'][0])" -ForegroundColor Green
+}
+
+# Wait a minute before next query
+Start-Sleep -Seconds 60
+
+# Constrained Delegation
+Write-Host "`n[*] Constrained Delegation:" -ForegroundColor Yellow
+$searcher = New-Object DirectoryServices.DirectorySearcher
+$searcher.Filter = "(msDS-AllowedToDelegateTo=*)"
+$searcher.PropertiesToLoad.AddRange(@("samaccountname","msds-allowedtodelegateto"))
+$searcher.FindAll() | ForEach-Object {
+    $name = $_.Properties["samaccountname"][0]
+    $target = $_.Properties["msds-allowedtodelegateto"]
+    Write-Host "  [+] $name → $target" -ForegroundColor Green
+}
+
+Start-Sleep -Seconds 60
+
+# RBCD
+Write-Host "`n[*] Resource-Based Constrained Delegation:" -ForegroundColor Yellow
+$searcher = New-Object DirectoryServices.DirectorySearcher
+$searcher.Filter = "(msDS-AllowedToActOnBehalfOfOtherIdentity=*)"
+$searcher.PropertiesToLoad.Add("samaccountname") | Out-Null
+$searcher.FindAll() | ForEach-Object {
+    Write-Host "  [+] $($_.Properties['samaccountname'][0])" -ForegroundColor Green
+}
