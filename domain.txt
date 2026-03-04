@@ -1,0 +1,46 @@
+$domainDN = ([ADSI]"LDAP://RootDSE").defaultNamingContext
+
+# Try DomainDnsZones first
+Write-Host "[*] Checking DomainDnsZones..." -ForegroundColor Yellow
+try {
+    $base = New-Object DirectoryServices.DirectoryEntry("LDAP://DC=DomainDnsZones,$domainDN")
+    $searcher = New-Object DirectoryServices.DirectorySearcher($base)
+    $searcher.Filter = "(objectClass=dnsZone)"
+    $searcher.PropertiesToLoad.Add("dc") | Out-Null
+    $searcher.FindAll() | ForEach-Object {
+        Write-Host "  [+] Zone: $($_.Properties['dc'][0])" -ForegroundColor Green
+        Write-Host "      Path: $($_.Path)" -ForegroundColor Cyan
+    }
+} catch {
+    Write-Host "  [-] DomainDnsZones not found" -ForegroundColor Red
+}
+
+# Try ForestDnsZones
+Write-Host "`n[*] Checking ForestDnsZones..." -ForegroundColor Yellow
+try {
+    $base = New-Object DirectoryServices.DirectoryEntry("LDAP://DC=ForestDnsZones,$domainDN")
+    $searcher = New-Object DirectoryServices.DirectorySearcher($base)
+    $searcher.Filter = "(objectClass=dnsZone)"
+    $searcher.PropertiesToLoad.Add("dc") | Out-Null
+    $searcher.FindAll() | ForEach-Object {
+        Write-Host "  [+] Zone: $($_.Properties['dc'][0])" -ForegroundColor Green
+        Write-Host "      Path: $($_.Path)" -ForegroundColor Cyan
+    }
+} catch {
+    Write-Host "  [-] ForestDnsZones not found" -ForegroundColor Red
+}
+
+# Try legacy location (CN=MicrosoftDNS,CN=System)
+Write-Host "`n[*] Checking legacy CN=System location..." -ForegroundColor Yellow
+try {
+    $base = New-Object DirectoryServices.DirectoryEntry("LDAP://CN=MicrosoftDNS,CN=System,$domainDN")
+    $searcher = New-Object DirectoryServices.DirectorySearcher($base)
+    $searcher.Filter = "(objectClass=dnsZone)"
+    $searcher.PropertiesToLoad.Add("dc") | Out-Null
+    $searcher.FindAll() | ForEach-Object {
+        Write-Host "  [+] Zone: $($_.Properties['dc'][0])" -ForegroundColor Green
+        Write-Host "      Path: $($_.Path)" -ForegroundColor Cyan
+    }
+} catch {
+    Write-Host "  [-] Legacy location not found" -ForegroundColor Red
+}
