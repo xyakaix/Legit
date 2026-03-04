@@ -1,0 +1,15 @@
+# Paste the EXACT path that matched jasdec.com
+$zonePath = "PASTE_PATH_HERE"
+
+$searcher = New-Object DirectoryServices.DirectorySearcher
+$searcher.SearchRoot = New-Object DirectoryServices.DirectoryEntry($zonePath)
+$searcher.Filter = "(objectClass=dnsNode)"
+$searcher.PageSize = 1000
+$searcher.PropertiesToLoad.AddRange(@("dc","name"))
+
+$searcher.FindAll() | ForEach-Object {
+    $name = $_.Properties["dc"][0]
+    if ($name -and $name -ne "@" -and $name -notmatch "^_") {
+        Write-Host "$name.$env:USERDNSDOMAIN"
+    }
+}
