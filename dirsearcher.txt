@@ -1,0 +1,21 @@
+# AD DNS records live in CN=MicrosoftDNS,DC=DomainDnsZones
+$domain = $env:USERDNSDOMAIN
+$domainDN = ($domain.Split('.') | ForEach-Object { "DC=$_" }) -join ','
+
+$dnsBase = "LDAP://DC=DomainDnsZones,$domainDN"
+
+# Pull the forward lookup zone
+$searcher = New-Object DirectoryServices.DirectorySearcher
+$searcher.SearchRoot = New-Object DirectoryServices.DirectoryEntry("LDAP://DC=$domain,CN=MicrosoftDNS,DC=DomainDnsZones,$domainDN")
+$searcher.Filter = "(objectClass=dnsNode)"
+$searcher.PageSize = 1000
+$searcher.PropertiesToLoad.AddRange(@("dc","dnsRecord","dNSTombstoned","name"))
+
+$results = $searcher.FindAll()
+
+foreach ($result in $results) {
+    $name = $result.Properties["dc"][0]
+    if ($name -and $name -ne "@" -and $name -ne "_") {
+        Write-Host "$name.$domain"
+    }
+}
